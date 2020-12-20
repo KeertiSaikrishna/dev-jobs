@@ -1,0 +1,22 @@
+@font-face {
+  font-family: 'Kumbh Sans';
+  font-style: normal;
+  font-weight: 400;
+  src:  local('Kumbh Sans'),
+        url('assets/font/KumbhSans-Regular.ttf') format('truetype')
+}
+
+@font-face {
+  font-family: 'Kumbh Sans Bold';
+  font-style: normal;
+  font-weight: 400;
+  src:  local('Kumbh Sans'),
+        url('assets/font/KumbhSans-Bold.ttf') format('truetype')
+}
+
+body {
+  margin: 0;
+  font-family: 'Kumbh Sans';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
