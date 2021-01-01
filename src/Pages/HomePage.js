@@ -19,54 +19,69 @@ const mq = breakpoints.map(
 
 function HomePage() {
     const [darkTheme, setDarkTheme] = useState(false);
-    const [count, setCount] = useState(12);
-    const [filteredJobsData, setFilteredJobsData] = useState([]);
+    const [page, setPage] = useState(1);
+    // const [filteredJobsData, setFilteredJobsData] = useState([]);
     const [jobsData, setJobsData] = useState([]);
+    const [searchString, setSearchString] = useState("");
+
+    const updatePostDates = (filteredJobs) => {
+        for (let x in filteredJobs) {
+            const currentDate = new Date();
+            const jobPostDate = new Date(filteredJobs[x].created_at);
+            const diffTime = Math.abs(currentDate - jobPostDate);
+            const diffDays = Math.ceil(diffTime / ( 1000 * 60 * 60 * 24));
+            const diffHours = Math.ceil(diffTime / ( 1000 * 60 * 60));
+            if ( diffDays > 1 && diffDays < 8 ) {
+                filteredJobs[x].postedTime = `${diffDays-1}d`;
+            } else if (diffDays > 7 && diffDays < 15) {
+                filteredJobs[x].postedTime = `${1}w`;
+            } else if (diffDays > 14 && diffDays < 30 ) {
+                filteredJobs[x].postedTime = `${2}w`;
+            } else if (diffDays > 30) {
+                filteredJobs[x].postedTime = `${1}m`;
+            } else {
+                filteredJobs[x].postedTime = `${diffHours}h`;
+            }
+        }
+        return filteredJobs;
+    }
 
     useEffect(() => {
-        async function fetchData() {
+        const fetchData =  async () => {
+            let api = `https://cors-anywhere.herokuapp.com/https://jobs.github.com/positions.json/?page=${page}&search=${searchString}`;
             fetch(
-                'https://cors-anywhere.herokuapp.com/https://jobs.github.com/positions.json'
+                api
               )
             .then((res) => res.json())
             .then((data) => {
-                setJobsData(data);
+                let filteredData = updatePostDates(data);
+                setJobsData(filteredData);
             });
         }
         fetchData();
-    }, []);
-
-    useEffect(() => {
-        if (jobsData.length > 0) {
-            const filteredJobs = jobsData.slice(0,count);            
-            for (let x in filteredJobs) {
-                const currentDate = new Date();
-                const jobPostDate = new Date(filteredJobs[x].created_at);
-                const diffTime = Math.abs(currentDate - jobPostDate);
-                const diffDays = Math.ceil(diffTime / ( 1000 * 60 * 60 * 24));
-                const diffHours = Math.ceil(diffTime / ( 1000 * 60 * 60));
-                if ( diffDays > 1 && diffDays < 8 ) {
-                    filteredJobs[x].postedTime = `${diffDays-1}d`;
-                } else if (diffDays > 7 && diffDays < 15) {
-                    filteredJobs[x].postedTime = `${1}w`;
-                } else if (diffDays > 14 && diffDays < 30 ) {
-                    filteredJobs[x].postedTime = `${2}w`;
-                } else if (diffDays > 30) {
-                    filteredJobs[x].postedTime = `${1}m`;
-                } else {
-                    filteredJobs[x].postedTime = `${diffHours}h`;
-                }
-            }
-            setFilteredJobsData(filteredJobs);
-        }
-    }, [count, jobsData])
+    }, [searchString, page]);
 
     const toggleDarkTheme = () => {
         setDarkTheme(prevState => !prevState);
     }
 
     const increaseCount = () => {
-        setCount(count => count + count);
+        setPage(count => count + 1);
+    }
+
+    const handleSearch = (event) => {
+        console.log('event is', event);
+        setSearchString(event.target.value);
+    }
+
+    const Debounce = ( fn, delay ) => {
+        let timer;
+        return ((args) =>  {
+            clearTimeout(timer);
+            timer = setTimeout( () => {
+                fn(args);
+            }, delay);
+        });
     }
 
     return (
@@ -100,7 +115,7 @@ function HomePage() {
                     display: flex;
                     justify-content: space-between;
                     align-items:center;
-                    height: 160px;
+                    height: 90px;
                 `} >
                 <Typography variant="h1" >devjobs</Typography>
                 <div className={css`
@@ -111,6 +126,28 @@ function HomePage() {
                     <Switch checked={darkTheme} onClick={toggleDarkTheme} />
                     <img className={css` height: 24px `} src={moonIcon} alt="moon" />
                 </div>
+            </div>
+            <div className={css` 
+                    display: flex; 
+                    gap: 16px;
+                    background-color: ${theme.secondaryColors.white};
+                    height: 30px;
+                    align-items: center;
+                    border-radius: 6px;
+                    padding: 20px;
+                `}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M16.024 15.0588H17.1123L23.9435 21.9037L21.9037 23.9435L15.0588 17.1123V16.0308L14.6824 15.6544C13.1286 16.9891 11.1093 17.7968 8.89842 17.7968C3.98374 17.7968 0 13.8131 0 8.89842C0 3.98374 3.98381 0 8.89842 0C13.813 0 17.7968 3.98374 17.7968 8.89842C17.7968 11.1093 16.9891 13.1286 15.6475 14.6824L16.024 15.0588ZM2.73799 8.89842C2.73799 12.3003 5.49651 15.0588 8.89842 15.0588C12.3003 15.0588 15.0588 12.3003 15.0588 8.89842C15.0588 5.49651 12.3003 2.73799 8.89842 2.73799C5.49651 2.73799 2.73799 5.49651 2.73799 8.89842Z" fill="#5964E0"/>
+                </svg>
+                <input className={css`
+                        height: 45px;
+                        width: 300px;
+                        border: none;
+                        &:focus {
+                            border: none;
+                            outline: none;
+                        }
+                    `} onChange={Debounce(handleSearch, 500)} placeholder="Filter by title, companies, expertise" />
             </div>
             <div className={css`
                     display: flex;
@@ -126,7 +163,7 @@ function HomePage() {
                         justify-content: space-between;
                     }
                 `}> 
-                {filteredJobsData.map(job => <JobCard key={job.id} job={job} darkTheme={darkTheme} />)}
+                {jobsData.map(job => <JobCard key={job.id} job={job} darkTheme={darkTheme} />)}
             </div>
             <div className={css`
                     align-self: center;
